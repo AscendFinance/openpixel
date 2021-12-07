@@ -1,5 +1,7 @@
 var Config = {
   id: '',
-  params: {},
+  params: {
+    cid: window.gaGlobal ? window.gaGlobal.vid : undefined,
+  },
   version: versionNumber
 }

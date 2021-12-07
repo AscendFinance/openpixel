@@ -18,7 +18,9 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
 var Config = {
   id: '',
-  params: {},
+  params: {
+    cid: window.gaGlobal ? window.gaGlobal.vid : undefined
+  },
   version: versionNumber
 };
 
@@ -458,4 +460,4 @@ window.onload = function () {
     }.bind(dataAttributes[i]));
   }
 };
-}(window, document, window["opix"], "opix", "/pixel.gif", 1));
+}(window, document, window["opix"], "opix", "https://tracker.coverrightmedicare.com/pixel.gif", 1));
