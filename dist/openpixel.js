@@ -19,7 +19,9 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 var Config = {
   id: '',
   params: {
-    cid: window.gaGlobal ? window.gaGlobal.vid : undefined
+    cid: function cid() {
+      return window.gaGlobal ? window.gaGlobal.vid : undefined;
+    }
   },
   version: versionNumber
 };
@@ -133,7 +135,7 @@ var Cookie = /*#__PURE__*/function () {
         expires = "expires=".concat(date.toGMTString(), "; ");
       }
 
-      document.cookie = "".concat(this.prefix()).concat(name, "=").concat(value, "; ").concat(expires, "path=").concat(path, "; SameSite=Lax");
+      document.cookie = "".concat(this.prefix()).concat(name, "=").concat(value, "; ").concat(expires, "path=").concat(path, "; SameSite=Lax; domain=.coverright.com");
     }
   }, {
     key: "get",

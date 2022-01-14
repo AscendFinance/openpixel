@@ -10,7 +10,7 @@ class Cookie {
       date.setTime(date.getTime() + (minutes * 60 * 1000));
       expires = `expires=${date.toGMTString()}; `;
     }
-    document.cookie = `${this.prefix()}${name}=${value}; ${expires}path=${path}; SameSite=Lax`;
+    document.cookie = `${this.prefix()}${name}=${value}; ${expires}path=${path}; SameSite=Lax; domain=.coverright.com`;
   }
 
   static get(name) {
