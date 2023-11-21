@@ -1,7 +1,25 @@
 // update the cookie if it exists, if it doesn't, create a new one, lasting 2 years
-Cookie.exists('uid') ? Cookie.set('uid', Cookie.get('uid'), 2*365*24*60) : Cookie.set('uid', Helper.guid(), 2*365*24*60);
+if (Cookie.exists('uid')) {
+  Cookie.set('uid', Cookie.get('uid'), 2*365*24*60)
+} else {
+  const urlParams = new URLSearchParams(window.location.search);
+  const guid = urlParams.has('uid') ? urlParams.get('uid') : Helper.guid();
+  Cookie.set('uid', guid, 2*365*24*60)
+}
+
+// if can't set uid to cookie will try to localStorage
+if (!Cookie.exists('uid')) {
+  if (!LocalStorage.get('uid')) {
+    LocalStorage.set('uid', Helper.guid())
+  }
+}
+
 // save any utms through as session cookies
 Cookie.setUtms();
+
+if (!Cookie.exists('utm')) {
+  LocalStorage.setUtms();
+}
 
 // process the queue and future incoming commands
 pixelFunc.process = function(method, value, optional) {

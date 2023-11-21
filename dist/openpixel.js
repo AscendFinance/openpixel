@@ -135,7 +135,7 @@ var Cookie = /*#__PURE__*/function () {
         expires = "expires=".concat(date.toGMTString(), "; ");
       }
 
-      document.cookie = "".concat(this.prefix()).concat(name, "=").concat(value, "; ").concat(expires, "path=").concat(path, "; SameSite=Lax; domain=.coverright.com");
+      document.cookie = "".concat(this.prefix()).concat(name, "=").concat(value, "; ").concat(expires, "path=").concat(path, "; SameSite=Lax; domain=.").concat(document.location.host.split('.').reverse().slice(0, 2).reverse().join('.'));
     }
   }, {
     key: "get",
@@ -206,6 +206,77 @@ var Cookie = /*#__PURE__*/function () {
   return Cookie;
 }();
 
+var LocalStorage = /*#__PURE__*/function () {
+  function LocalStorage() {
+    _classCallCheck(this, LocalStorage);
+  }
+
+  _createClass(LocalStorage, null, [{
+    key: "prefix",
+    value: function prefix() {
+      return "__".concat(pixelFuncName, "_");
+    }
+  }, {
+    key: "get",
+    value: function get(name) {
+      return localStorage.getItem(this.prefix() + name);
+    }
+  }, {
+    key: "exists",
+    value: function exists(name) {
+      return Helper.isPresent(this.get(name));
+    }
+  }, {
+    key: "setUtms",
+    value: function setUtms() {
+      var utmArray = ['utm_source', 'utm_medium', 'utm_term', 'utm_content', 'utm_campaign'];
+      var exists = false;
+
+      for (var i = 0, l = utmArray.length; i < l; i++) {
+        if (Helper.isPresent(Url.getParameterByName(utmArray[i]))) {
+          exists = true;
+          break;
+        }
+      }
+
+      if (exists) {
+        var val,
+            save = {};
+
+        for (var i = 0, l = utmArray.length; i < l; i++) {
+          val = Url.getParameterByName(utmArray[i]);
+
+          if (Helper.isPresent(val)) {
+            save[utmArray[i]] = val;
+          }
+        }
+
+        this.set('utm', JSON.stringify(save));
+      }
+    }
+  }, {
+    key: "getUtm",
+    value: function getUtm(name) {
+      if (this.exists('utm')) {
+        var utms = JSON.parse(this.get('utm'));
+        return name in utms ? utms[name] : '';
+      }
+    }
+  }, {
+    key: "set",
+    value: function set(name, value) {
+      localStorage.setItem(this.prefix() + name, value);
+    }
+  }, {
+    key: "remove",
+    value: function remove(name) {
+      localStorage.removeItem(this.prefix() + name);
+    }
+  }]);
+
+  return LocalStorage;
+}();
+
 var Url = /*#__PURE__*/function () {
   function Url() {
     _classCallCheck(this, Url);
@@ -267,7 +338,7 @@ var Pixel = /*#__PURE__*/function () {
         },
         // website Id
         uid: function uid() {
-          return Cookie.get('uid');
+          return Cookie.get('uid') || LocalStorage.get('uid');
         },
         // user Id
         ev: function ev() {
@@ -331,23 +402,23 @@ var Pixel = /*#__PURE__*/function () {
         },
         // timezone
         utm_source: function utm_source(key) {
-          return Cookie.getUtm(key);
+          return Cookie.getUtm(key) || LocalStorage.getUtm(key);
         },
         // get the utm source
         utm_medium: function utm_medium(key) {
-          return Cookie.getUtm(key);
+          return Cookie.getUtm(key) || LocalStorage.getUtm(key);
         },
         // get the utm medium
         utm_term: function utm_term(key) {
-          return Cookie.getUtm(key);
+          return Cookie.getUtm(key) || LocalStorage.getUtm(key);
         },
         // get the utm term
         utm_content: function utm_content(key) {
-          return Cookie.getUtm(key);
+          return Cookie.getUtm(key) || LocalStorage.getUtm(key);
         },
         // get the utm content
         utm_campaign: function utm_campaign(key) {
-          return Cookie.getUtm(key);
+          return Cookie.getUtm(key) || LocalStorage.getUtm(key);
         }
       }, Config.params);
     }
@@ -391,9 +462,28 @@ var Pixel = /*#__PURE__*/function () {
 }(); // update the cookie if it exists, if it doesn't, create a new one, lasting 2 years
 
 
-Cookie.exists('uid') ? Cookie.set('uid', Cookie.get('uid'), 2 * 365 * 24 * 60) : Cookie.set('uid', Helper.guid(), 2 * 365 * 24 * 60); // save any utms through as session cookies
+if (Cookie.exists('uid')) {
+  Cookie.set('uid', Cookie.get('uid'), 2 * 365 * 24 * 60);
+} else {
+  var urlParams = new URLSearchParams(window.location.search);
+  var guid = urlParams.has('uid') ? urlParams.get('uid') : Helper.guid();
+  Cookie.set('uid', guid, 2 * 365 * 24 * 60);
+} // if can't set uid to cookie will try to localStorage
 
-Cookie.setUtms(); // process the queue and future incoming commands
+
+if (!Cookie.exists('uid')) {
+  if (!LocalStorage.get('uid')) {
+    LocalStorage.set('uid', Helper.guid());
+  }
+} // save any utms through as session cookies
+
+
+Cookie.setUtms();
+
+if (!Cookie.exists('utm')) {
+  LocalStorage.setUtms();
+} // process the queue and future incoming commands
+
 
 pixelFunc.process = function (method, value, optional) {
   if (method === 'init') {
